@@ -1,3 +1,4 @@
+// Eduardo Garcia, Eduardo Riboli, Matheus Fernandes e Jocemar Nicolodi
 // por Fernando Dotti - fldotti.github.io - PUCRS - Escola Politécnica
 // EXERCÍCIO:  dado o programa abaixo
 //     considerando-se como estados os valores da tripla x,y,z
@@ -10,6 +11,7 @@
 package main
 
 //---------------------------
+// !!!!!!!!!!!! Tem q fazer aquelas porra de variável vai de 1 pra 2 e assim vai,
 
 var x, y, z int = 0, 0, 0
 

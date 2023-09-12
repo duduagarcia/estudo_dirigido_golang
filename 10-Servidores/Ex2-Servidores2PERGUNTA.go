@@ -1,3 +1,4 @@
+// Eduardo Garcia, Eduardo Riboli, Matheus Fernandes e Jocemar Nicolodi
 // por Fernando Dotti - fldotti.github.io - PUCRS - Escola Politécnica
 // servidor com criacao dinamica de thread de servico
 // Problema:

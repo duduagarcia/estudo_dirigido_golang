@@ -1,3 +1,4 @@
+// Eduardo Garcia, Eduardo Riboli, Matheus Fernandes e Jocemar Nicolodi
 // por Fernando Dotti - PUCRS
 // dado abaixo um exemplo de estrutura em arvore, uma arvore inicializada
 // e uma operação de caminhamento, pede-se fazer:

@@ -1,3 +1,4 @@
+// Eduardo Garcia, Eduardo Riboli, Matheus Fernandes e Jocemar Nicolodi
 // por Fernando Dotti - fldotti.github.io - PUCRS - Escola Politécnica
 // sort com pipeline de processos
 // voce deve ter feito os exercicios anteriores desta serie

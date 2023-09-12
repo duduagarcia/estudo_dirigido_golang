@@ -1,3 +1,4 @@
+// Eduardo Garcia, Eduardo Riboli, Matheus Fernandes e Jocemar Nicolodi
 // por Fernando Dotti - fldotti.github.io - PUCRS - Escola Politécnica
 // PROBLEMA:
 //   o dorminhoco especificado no arquivo Ex1-ExplanacaoDoDorminhoco.pdf nesta pasta

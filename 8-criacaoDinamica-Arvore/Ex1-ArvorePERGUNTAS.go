@@ -114,17 +114,17 @@ func retornaParImpar(r *Nodo, saidaP chan int, saidaI chan int, fin chan struct{
 
 func retornaParImparConc(r *Nodo, saidaP chan int, saidaI chan int, fin chan struct{}) {
 	if r != nil {
+		if r.v%2 == 0 {
+			saidaP <- r.v
+		} else {
+			saidaI <- r.v
+		}
 		s1 := make(chan struct{})
 		s2 := make(chan struct{})
 		go retornaParImparConc(r.e, saidaP, saidaI, s1)
 		go retornaParImparConc(r.d, saidaP, saidaI, s2)
 		<-s1
 		<-s2
-		if r.v%2 == 0 {
-			saidaP <- r.v
-		} else {
-			saidaI <- r.v
-		}
 	} else {
 		fin <- struct{}{}
 	}
@@ -158,7 +158,7 @@ func main() {
 	fmt.Println("Soma: ", soma(root))
 	fmt.Println("SomaConc: ", somaConc(root))
 
-	// retorna par e impar
+	// retorna par e impar não-concorrente
 	// saidaP := make(chan int)
 	// saidaI := make(chan int)
 	// fin := make(chan struct{})
@@ -179,7 +179,7 @@ func main() {
 	saidaI := make(chan int)
 	fin := make(chan struct{})
 	go retornaParImparConc(root, saidaP, saidaI, fin)
-	for i := 0; i < 300; i++ {
+	for i := 0; i < 15; i++ {
 		select {
 		case p := <-saidaP:
 			fmt.Println("Par: ", p)

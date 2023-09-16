@@ -112,6 +112,24 @@ func retornaParImpar(r *Nodo, saidaP chan int, saidaI chan int, fin chan struct{
 	}
 }
 
+func retornaParImparConc(r *Nodo, saidaP chan int, saidaI chan int, fin chan struct{}) {
+	if r != nil {
+		s1 := make(chan struct{})
+		s2 := make(chan struct{})
+		go retornaParImparConc(r.e, saidaP, saidaI, s1)
+		go retornaParImparConc(r.d, saidaP, saidaI, s2)
+		<-s1
+		<-s2
+		if r.v%2 == 0 {
+			saidaP <- r.v
+		} else {
+			saidaI <- r.v
+		}
+	} else {
+		fin <- struct{}{}
+	}
+}
+
 // ---------   agora vamos criar a arvore e usar as funcoes acima
 
 func main() {
@@ -141,11 +159,27 @@ func main() {
 	fmt.Println("SomaConc: ", somaConc(root))
 
 	// retorna par e impar
+	// saidaP := make(chan int)
+	// saidaI := make(chan int)
+	// fin := make(chan struct{})
+	// go retornaParImpar(root, saidaP, saidaI, fin)
+	// for i := 0; i < 30; i++ {
+	// 	select {
+	// 	case p := <-saidaP:
+	// 		fmt.Println("Par: ", p)
+	// 	case i := <-saidaI:
+	// 		fmt.Println("Impar: ", i)
+	// 	case <-fin:
+	// 		fmt.Println("Fim")
+	// 	}
+	// }
+
+	// retorna par e impar concorrente
 	saidaP := make(chan int)
 	saidaI := make(chan int)
 	fin := make(chan struct{})
-	go retornaParImpar(root, saidaP, saidaI, fin)
-	for i := 0; i < 30; i++ {
+	go retornaParImparConc(root, saidaP, saidaI, fin)
+	for i := 0; i < 300; i++ {
 		select {
 		case p := <-saidaP:
 			fmt.Println("Par: ", p)
@@ -155,6 +189,4 @@ func main() {
 			fmt.Println("Fim")
 		}
 	}
-
-	//
 }

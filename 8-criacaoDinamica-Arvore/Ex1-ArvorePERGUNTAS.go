@@ -98,6 +98,20 @@ func buscaConcCh(r *Nodo, v int, s chan bool) {
 	}
 }
 
+func retornaParImpar(r *Nodo, saidaP chan int, saidaI chan int, fin chan struct{}) {
+	if r != nil {
+		retornaParImpar(r.e, saidaP, saidaI, fin)
+		if r.v%2 == 0 {
+			saidaP <- r.v
+		} else {
+			saidaI <- r.v
+		}
+		retornaParImpar(r.d, saidaP, saidaI, fin)
+	} else {
+		fin <- struct{}{}
+	}
+}
+
 // ---------   agora vamos criar a arvore e usar as funcoes acima
 
 func main() {
@@ -127,5 +141,20 @@ func main() {
 	fmt.Println("SomaConc: ", somaConc(root))
 
 	// retorna par e impar
+	saidaP := make(chan int)
+	saidaI := make(chan int)
+	fin := make(chan struct{})
+	go retornaParImpar(root, saidaP, saidaI, fin)
+	for i := 0; i < 30; i++ {
+		select {
+		case p := <-saidaP:
+			fmt.Println("Par: ", p)
+		case i := <-saidaI:
+			fmt.Println("Impar: ", i)
+		case <-fin:
+			fmt.Println("Fim")
+		}
+	}
 
+	//
 }

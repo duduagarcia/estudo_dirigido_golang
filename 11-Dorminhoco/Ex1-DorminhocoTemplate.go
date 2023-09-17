@@ -42,6 +42,7 @@ func jogador(id int, cartasIniciais []carta) {
 				return
 			}
 			mao = append(mao, cartaRecebida)
+			nroDeCartas++
 			fmt.Println(id, " recebeu carta:", cartaRecebida)
 
 			// Lógica para verificar se o jogador pode bater.
@@ -130,14 +131,18 @@ func main() {
 	// Inicia o jogo
 	for i := 0; i < NJ; i++ {
 		wg.Add(1)
-		ch[i] <- cartasDisponiveis[i*M] // Cada jogador recebe uma carta para iniciar.
+		ch[i] <- cartasDisponiveis[i*M] // Cada jogador recebe uma carta para iniciar.\
 	}
 
+	fmt.Println("Aguardando termino")
 	// Aguarda o término do jogo
 	wg.Wait()
+
+	fmt.Println("Termino")
 
 	// Fecha os canais para indicar que o jogo terminou
 	for i := 0; i < NJ; i++ {
 		close(ch[i])
+		fmt.Println("fechou\n")
 	}
 }

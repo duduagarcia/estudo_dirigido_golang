@@ -58,10 +58,15 @@ func trataReq(id int, req Request) {
 func servidorConc(in chan Request) {
 	// servidor fica em loop eterno recebendo pedidos e criando um processo concorrente para tratar cada pedido
 	var j int = 0
+	done := make(chan struct{}, 10)
 	for {
-		j++
 		req := <-in
-		go trataReq(j, req)
+		done <- struct {}{}
+		for i := 0; i < Pool; i++ {	
+			j++
+			go trataReq(j, req)
+		}
+		<-done
 	}
 }
 

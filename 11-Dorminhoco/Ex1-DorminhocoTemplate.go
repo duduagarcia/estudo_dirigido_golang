@@ -55,8 +55,15 @@ func jogador(id int, cartasIniciais []carta) {
 			// Jogador tem uma carta a mais, escolhe uma e escreve na saída.
 			fmt.Println(id, " joga")
 			cartaParaSair := mao[0] // Escolha uma carta para passar adiante.
-			mao = mao[1:]            // Remove a carta da mão.
+			// fmt.Println("jogador: " + "Carta para sair: ", id, cartaParaSair)
+			// fmt.Println("Mao pré jogador: ", id, mao)
+			mao = mao[1:]             // Remove a carta da mão.
+			// fmt.Println("Mao pós jogador: ", id, mao)
+			fmt.Println("Carta para Sair:", cartaParaSair, " Proximo jogador:", nextPlayer)
+			fmt.Println(ch)
 			ch[nextPlayer] <- cartaParaSair // Manda carta escolhida para o próximo jogador.
+			//deadlock
+
 			nroDeCartas--
 
 			// Recebe carta na entrada.
@@ -89,7 +96,7 @@ func podeBater(mao []carta) bool {
 	}
 	primeiraCarta := mao[0]
 	for _, carta := range mao {
-		if carta != primeiraCarta {
+		if carta != primeiraCarta && carta != "@"{
 			return false
 		}
 	}

@@ -14,22 +14,23 @@ package main
 import (
 	"fmt"
 	"math/rand"
+	"strconv"
 )
 
 const NJ = 5 // Número de jogadores
 const M = 4  // Número de cartas
+var ganhadores = []string{}
 
 type carta string // carta é uma string
 
 var ch [NJ]chan carta // NJ canais de itens tipo carta
 
-func jogador(id int, cartasIniciais []carta, ganhador chan int, bateu chan int) {
+func jogador(id int, cartasIniciais []carta, ganhador chan int, done chan struct{}) {
 	mao := cartasIniciais // estado local - as cartas na mão do jogador
 	nroDeCartas := M      // quantas cartas ele tem
 	nextPlayer := (id + 1) % NJ
 
-	done := make(chan struct{})
-	go baterAlternativo(bateu, id, done)
+	go baterAlternativo(id, ganhador, done)
 
 	for {
 		// Jogador tem o número "normal" de cartas, espera uma carta na entrada.
@@ -48,7 +49,8 @@ func jogador(id int, cartasIniciais []carta, ganhador chan int, bateu chan int) 
 		if podeBater(mao) {
 			fmt.Println(id, " bateu!")
 			ganhador <- id
-			bateu <- id
+			ganhadores = append(ganhadores, strconv.Itoa(id))
+			return
 		} else {
 			ch[nextPlayer] <- cartaParaSair // Manda carta escolhida para o próximo jogador.
 		}
@@ -56,36 +58,19 @@ func jogador(id int, cartasIniciais []carta, ganhador chan int, bateu chan int) 
 	}
 }
 
-func baterAlternativo(bateu chan int, id int, done chan struct{}) {
-	/* fmt.Println("ANTES DO BATEU")
-	valido := <-bateu
-	fmt.Println("PASSOU DO BATEU, ID:", id)
-	if valido == id {
-		fmt.Println("JÁ TEM NO BATEU, ID:", id)
-		return
-	}
+func baterAlternativo(id int, ganhador chan int, done chan struct{}) {
+	<-done
 
-	fmt.Println("INSERIU NO BATEU, ID:", id)
-	bateu <- id */
-
-	// verificar se alguém ja bateu através do canal ganhador
-	// se alguém bateu, verificar se o id do player é igual ao id ganhador
-	// se não for, incluir no canal com buffer
-	// se for, encerrar o processo para este player
-
-	//valido:= <-bateu
-	
-	inseriu = false
-	for num := range bateu {
-		if num == id {
+	var contains = false
+	for _, winner := range ganhadores {
+		if winner == strconv.Itoa(id) {
+			contains = true
 			done <- struct{}{}
-			inseriu = true
-		} 
-	} 
-	if !inseriu {
-		//fmt.Println("INSERIU NO BATEU, ID:", id)
-		bateu <- id
-		fmt.Println("INSERIU NO BATEU, ID:", id)
+		}
+	}
+	if !contains {
+		ganhadores = append(ganhadores, strconv.Itoa(id))
+		ganhador <- id
 	}
 }
 
@@ -107,8 +92,8 @@ func podeBater(mao []carta) bool {
 }
 
 func main() {
-	ganhador := make(chan int)
-	bateu := make(chan int, 5)
+	ganhador := make(chan int, 1)
+	done := make(chan struct{})
 
 	// Inicializa canais de comunicação entre processos
 	for i := 0; i < NJ; i++ {
@@ -136,7 +121,7 @@ func main() {
 	// Distribui cartas iniciais para os jogadores
 	for i := 0; i < NJ; i++ {
 		cartasIniciais := baralho[i*M : (i+1)*M]
-		go jogador(i, cartasIniciais, ganhador, bateu)
+		go jogador(i, cartasIniciais, ganhador, done)
 	}
 
 	// Inicia o jogo
@@ -144,22 +129,16 @@ func main() {
 
 	// Aguarda o término do jogo
 	fmt.Println("Aguardando termino")
-	// printa os itens do buffer bateu
-	
-	// Faça a análise desejada aqui, por exemplo, imprimir o número
-	/* while bateu != nil {
-		fmt.Println("Número recebido:", <-bateu)
-	} */
-	//fmt.Println("Número recebido:", <-bateu)
-
-    
 
 	// Printa os ganhadores
 	for i := 0; i < NJ; i++ {
-		fmt.Println("Ganhador", i+1, ":", <-ganhador)
 		if i == NJ-1 {
 			fmt.Println("DORMINHOCO: ", <-ganhador)
+			break
+		} else {
+			fmt.Println("Ganhador", i+1, ":", <-ganhador)
 		}
+		done <- struct{}{}
 	}
 
 	fmt.Println("Termino")

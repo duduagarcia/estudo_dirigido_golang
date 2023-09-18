@@ -28,7 +28,8 @@ func jogador(id int, cartasIniciais []carta, ganhador chan int, bateu chan int) 
 	nroDeCartas := M      // quantas cartas ele tem
 	nextPlayer := (id + 1) % NJ
 
-	go baterAlternativo(bateu, id)
+	done := make(chan struct{})
+	go baterAlternativo(bateu, id, done)
 
 	for {
 		// Jogador tem o número "normal" de cartas, espera uma carta na entrada.
@@ -55,8 +56,8 @@ func jogador(id int, cartasIniciais []carta, ganhador chan int, bateu chan int) 
 	}
 }
 
-func baterAlternativo(bateu chan int, id int) {
-	fmt.Println("ANTES DO BATEU")
+func baterAlternativo(bateu chan int, id int, done chan struct{}) {
+	/* fmt.Println("ANTES DO BATEU")
 	valido := <-bateu
 	fmt.Println("PASSOU DO BATEU, ID:", id)
 	if valido == id {
@@ -65,8 +66,27 @@ func baterAlternativo(bateu chan int, id int) {
 	}
 
 	fmt.Println("INSERIU NO BATEU, ID:", id)
-	bateu <- id
+	bateu <- id */
 
+	// verificar se alguém ja bateu através do canal ganhador
+	// se alguém bateu, verificar se o id do player é igual ao id ganhador
+	// se não for, incluir no canal com buffer
+	// se for, encerrar o processo para este player
+
+	//valido:= <-bateu
+	
+	inseriu = false
+	for num := range bateu {
+		if num == id {
+			done <- struct{}{}
+			inseriu = true
+		} 
+	} 
+	if !inseriu {
+		//fmt.Println("INSERIU NO BATEU, ID:", id)
+		bateu <- id
+		fmt.Println("INSERIU NO BATEU, ID:", id)
+	}
 }
 
 func podeBater(mao []carta) bool {
@@ -124,6 +144,15 @@ func main() {
 
 	// Aguarda o término do jogo
 	fmt.Println("Aguardando termino")
+	// printa os itens do buffer bateu
+	
+	// Faça a análise desejada aqui, por exemplo, imprimir o número
+	/* while bateu != nil {
+		fmt.Println("Número recebido:", <-bateu)
+	} */
+	//fmt.Println("Número recebido:", <-bateu)
+
+    
 
 	// Printa os ganhadores
 	for i := 0; i < NJ; i++ {

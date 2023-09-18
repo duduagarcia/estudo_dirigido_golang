@@ -14,8 +14,6 @@ package main
 import (
 	"fmt"
 	"math/rand"
-	"sync"
-	"time"
 )
 
 const NJ = 5 // Número de jogadores
@@ -24,66 +22,51 @@ const M = 4  // Número de cartas
 type carta string // carta é uma string
 
 var ch [NJ]chan carta // NJ canais de itens tipo carta
-var wg sync.WaitGroup // WaitGroup para esperar que todos os jogadores terminem
 
-func jogador(id int, cartasIniciais []carta) {
+func jogador(id int, cartasIniciais []carta, ganhador chan int, bateu chan int) {
 	mao := cartasIniciais // estado local - as cartas na mão do jogador
 	nroDeCartas := M      // quantas cartas ele tem
 	nextPlayer := (id + 1) % NJ
 
+	go baterAlternativo(bateu, id)
+
 	for {
-		if nroDeCartas == M {
-			// Jogador tem o número "normal" de cartas, espera uma carta na entrada.
-			fmt.Println(id, " espera carta.")
-			cartaRecebida, ok := <-ch[id] // Recebe carta na entrada.
-			if !ok {
-				// Canal fechado, o jogo terminou.
-				wg.Done()
-				return
-			}
-			mao = append(mao, cartaRecebida)
-			nroDeCartas++
-			fmt.Println(id, " recebeu carta:", cartaRecebida)
+		// Jogador tem o número "normal" de cartas, espera uma carta na entrada.
+		fmt.Println(id, " espera carta.")
+		cartaRecebida := <-ch[id] // Recebe carta na entrada.
+		mao = append(mao, cartaRecebida)
+		nroDeCartas++
+		fmt.Println(id, " recebeu carta:", cartaRecebida)
 
-			// Lógica para verificar se o jogador pode bater.
-			if podeBater(mao) {
-				fmt.Println(id, " bateu!")
-				ch[nextPlayer] <- mao[0] // Passa a carta para o próximo jogador.
-				return
-			}
+		// Jogador tem uma carta a mais, escolhe uma e escreve na saída.
+		fmt.Println(id, " joga")
+		cartaParaSair := mao[0] // Escolha uma carta para passar adiante.
+		mao = mao[1:]           // Remove a carta da mão.
+		nroDeCartas--
+		// Lógica para verificar se o jogador pode bater.
+		if podeBater(mao) {
+			fmt.Println(id, " bateu!")
+			ganhador <- id
+			bateu <- id
 		} else {
-			// Jogador tem uma carta a mais, escolhe uma e escreve na saída.
-			fmt.Println(id, " joga")
-			cartaParaSair := mao[0] // Escolha uma carta para passar adiante.
-			// fmt.Println("jogador: " + "Carta para sair: ", id, cartaParaSair)
-			// fmt.Println("Mao pré jogador: ", id, mao)
-			mao = mao[1:]             // Remove a carta da mão.
-			// fmt.Println("Mao pós jogador: ", id, mao)
-			fmt.Println("Carta para Sair:", cartaParaSair, " Proximo jogador:", nextPlayer)
-			fmt.Println(ch)
 			ch[nextPlayer] <- cartaParaSair // Manda carta escolhida para o próximo jogador.
-			//deadlock
-
-			nroDeCartas--
-
-			// Recebe carta na entrada.
-			cartaRecebida, ok := <-ch[id]
-			if !ok {
-				// Canal fechado, o jogo terminou.
-				wg.Done()
-				return
-			}
-			mao = append(mao, cartaRecebida)
-			fmt.Println(id, " recebeu carta:", cartaRecebida)
-
-			// Lógica para verificar se o jogador pode bater.
-			if podeBater(mao) {
-				fmt.Println(id, " bateu!")
-				ch[nextPlayer] <- mao[0] // Passa a carta para o próximo jogador.
-				return
-			}
 		}
+
 	}
+}
+
+func baterAlternativo(bateu chan int, id int) {
+	fmt.Println("ANTES DO BATEU")
+	valido := <-bateu
+	fmt.Println("PASSOU DO BATEU, ID:", id)
+	if valido == id {
+		fmt.Println("JÁ TEM NO BATEU, ID:", id)
+		return
+	}
+
+	fmt.Println("INSERIU NO BATEU, ID:", id)
+	bateu <- id
+
 }
 
 func podeBater(mao []carta) bool {
@@ -96,7 +79,7 @@ func podeBater(mao []carta) bool {
 	}
 	primeiraCarta := mao[0]
 	for _, carta := range mao {
-		if carta != primeiraCarta && carta != "@"{
+		if carta != primeiraCarta && carta != "@" {
 			return false
 		}
 	}
@@ -104,7 +87,8 @@ func podeBater(mao []carta) bool {
 }
 
 func main() {
-	rand.Seed(time.Now().UnixNano())
+	ganhador := make(chan int)
+	bateu := make(chan int, 5)
 
 	// Inicializa canais de comunicação entre processos
 	for i := 0; i < NJ; i++ {
@@ -132,24 +116,22 @@ func main() {
 	// Distribui cartas iniciais para os jogadores
 	for i := 0; i < NJ; i++ {
 		cartasIniciais := baralho[i*M : (i+1)*M]
-		go jogador(i, cartasIniciais)
+		go jogador(i, cartasIniciais, ganhador, bateu)
 	}
 
 	// Inicia o jogo
-	for i := 0; i < NJ; i++ {
-		wg.Add(1)
-		ch[i] <- cartasDisponiveis[i*M] // Cada jogador recebe uma carta para iniciar.\
-	}
+	ch[0] <- cartasDisponiveis[0] // Cada jogador recebe uma carta para iniciar.\
 
-	fmt.Println("Aguardando termino")
 	// Aguarda o término do jogo
-	wg.Wait()
+	fmt.Println("Aguardando termino")
+
+	// Printa os ganhadores
+	for i := 0; i < NJ; i++ {
+		fmt.Println("Ganhador", i+1, ":", <-ganhador)
+		if i == NJ-1 {
+			fmt.Println("DORMINHOCO: ", <-ganhador)
+		}
+	}
 
 	fmt.Println("Termino")
-
-	// Fecha os canais para indicar que o jogo terminou
-	for i := 0; i < NJ; i++ {
-		close(ch[i])
-		fmt.Println("fechou\n")
-	}
 }
